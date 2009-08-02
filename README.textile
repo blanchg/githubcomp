@@ -1,4 +1,4 @@
-h1 GITHUB contest
+h1. GITHUB contest
 
 Current progress is disappointing but I have a few more ideas.
 
