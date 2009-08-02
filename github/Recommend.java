@@ -355,7 +355,7 @@ public class Recommend {
 				//testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
 //				System.out.println("Suggesting : " + startSuggestions
 				testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
-				startSuggestions += testUser.remaining + 1;
+				startSuggestions += testUser.remaining;
 				removeDuplicates(testUser.suggested);
 				testUser.remaining = SUGGESTIONS - testUser.suggested.size();
 			}
