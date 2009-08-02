@@ -346,14 +346,14 @@ public class Recommend {
 				//System.out.println("User isn't watching anything yet!");
 				empty++;
 			}
-			if (testUser.remaining > 0) {
+			while (testUser.remaining > 0) {
 				guessed += testUser.remaining;
 				//System.out.println("Added top " + testUser.remaining + " repos");
 				List<Repository> shuffled = sortedRepositories.subList(0, 100);
 				Collections.shuffle(shuffled);
 				testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
-				testUser.remaining = 0;
-				
+				removeDuplicates(testUser.suggested);
+				testUser.remaining = SUGGESTIONS - testUser.suggested.size();
 			}
 			Collections.sort(testUser.suggested, Collections.reverseOrder(new Repository.FollowerComparator()));
 			i++;
@@ -365,6 +365,16 @@ public class Recommend {
 		System.out.println(" " + unique + " unique test users - they watch stuff noone else is watching");
 		System.out.println(" " + guessed + " guessed suggestions - taken from the most popular projects");
 		System.out.println(" " + (SUGGESTIONS * testUsers.size()) + " total suggestions");
+	}
+
+	public void removeDuplicates(List list) {
+		for (int i = 0; i < list.size(); i++) {
+			Object o = list.get(i);
+			int j = list.lastIndexOf(o);
+			if (j != -1 && j != i) {
+				list.remove(o);
+			}
+		}
 	}
 
 	public void buildStats() {
