@@ -1,0 +1,11 @@
+h1 GITHUB contest
+
+Current progress is disappointing but I have a few more ideas.
+
+The biggest problem is there isn't a great deal of similarity between different users.
+
+There is 1266 users in the test group that only have unique watches! so impossible to profile.
+
+Most of the other users have 1 or 2 watches in common.
+
+It appears that the average user only watches 1 or 2 repositories.
