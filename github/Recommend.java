@@ -346,12 +346,16 @@ public class Recommend {
 				//System.out.println("User isn't watching anything yet!");
 				empty++;
 			}
+			int startSuggestions = 0;
 			while (testUser.remaining > 0) {
 				guessed += testUser.remaining;
 				//System.out.println("Added top " + testUser.remaining + " repos");
-				List<Repository> shuffled = sortedRepositories.subList(0, 100);
-				Collections.shuffle(shuffled);
-				testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
+				//List<Repository> shuffled = sortedRepositories.subList(0, 100);
+				//Collections.shuffle(shuffled);
+				//testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
+//				System.out.println("Suggesting : " + startSuggestions
+				testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
+				startSuggestions += testUser.remaining + 1;
 				removeDuplicates(testUser.suggested);
 				testUser.remaining = SUGGESTIONS - testUser.suggested.size();
 			}
