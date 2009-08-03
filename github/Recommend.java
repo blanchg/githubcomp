@@ -339,13 +339,17 @@ public class Recommend {
 
 				if (testUser.watching.size() > 0) {
 					List<Language> userLangs = discoverLanguages(testUser);
+					Collections.sort(userLangs, Collections.reverseOrder(new Language.LinesComparator()));
 					String mainLanguage = null;
 					if (userLangs.size() < 1) {
 						// back to random
-					} else if (userLangs.size() == 1 && testUser.watching.size() > 1) {
+					} else if (userLangs.size() == 1) {
 						// Only interested in language x
 						singleLanguage++;
 						mainLanguage = userLangs.get(0).name;
+					} else {
+						mainLanguage = userLangs.get(0).name;
+					
 					}/* else if (userLangs.size() < 4 && testUser.watching.size() > 1) {
 						// filter out "helper langs" like javascript
 						Iterator<Language> userLangIt = userLangs.iterator();
