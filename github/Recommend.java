@@ -346,7 +346,7 @@ public class Recommend {
 						// Only interested in language x
 						singleLanguage++;
 						mainLanguage = userLangs.get(0).name;
-					} else if (userLangs.size() < 4 && testUser.watching.size() > 1) {
+					}/* else if (userLangs.size() < 4 && testUser.watching.size() > 1) {
 						// filter out "helper langs" like javascript
 						Iterator<Language> userLangIt = userLangs.iterator();
 						while (userLangIt.hasNext()) {
@@ -361,7 +361,7 @@ public class Recommend {
 						}
 					} else {
 						// They probably don't care about language.
-					}
+					}*/
 					if (mainLanguage != null) {
 						System.out.println("Main Language: " + mainLanguage);
 						// Make suggestions based on language
