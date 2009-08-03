@@ -14,7 +14,7 @@ public class Recommend {
 	public Map<String, User> users = new HashMap<String, User>();
 	//public Map<String, User> watchingUsers = new HashMap<String, User>();
 	public Map<String, TestUser> testUsers = new HashMap<String, TestUser>();
-	public Map<String, List> languagesProject = new HashMap<String, List>();
+	public Map<String, List<Repository>> repoLanguages = new HashMap<String, List<Repository>>();
 
 	// stats
 	public List<Repository> sortedRepositories;
@@ -96,6 +96,16 @@ public class Recommend {
 					//System.err.println("Languages for an unknown repository: " + langs.repo);
 				} else {
 					repo.languages = langs.languages;
+					Iterator<Language> langIt = langs.languages.iterator();
+					while (langIt.hasNext()) {
+						Language l = langIt.next();
+						List<Repository> rl = repoLanguages.get(l.name);
+						if (rl == null) {
+							rl = new ArrayList<Repository>();
+							repoLanguages.put(l.name, rl);
+						}
+						rl.add(repo);
+					}
 				}
 
 				i++;
@@ -285,6 +295,10 @@ public class Recommend {
 		int unique = 0;
 		int empty = 0;
 		int guessed = 0;
+		int singleLanguage = 0;
+		int mainLanguageCount = 0;
+		int filtered = 0;
+		int languageGuessed = 0;
 		while (it.hasNext()) {
 			if (i % 280 == 0) System.out.print(".");
 			TestUser testUser = it.next();
@@ -315,49 +329,70 @@ public class Recommend {
 				//System.out.println(testUser + ":" + testUser.getWatches());
 				//System.out.println(testUser.bestUser);
 				// Either they aren't watching anything or
-				Map<String,Language> languages = new HashMap<String,Language>();
-				Iterator<Repository> repoIt = testUser.watching.iterator();
-				while (repoIt.hasNext()) {
-					Repository repo = repoIt.next();
-					if (repo.languages != null) {
-						Iterator<Language> langIt = repo.languages.iterator();
-						while (langIt.hasNext()) {
-							Language src = langIt.next();
-							Language lang = languages.get(src.name);
-							if (lang == null) {
-								lang = new Language(src.name, 0);
-								lang.name = src.name;
-								languages.put(src.name, lang);
-							}
-							lang.lines += src.lines;
-						}
-					}
-				}
-				Iterator<Language> langIt = languages.values().iterator();
-				System.out.print(testUser.id + ":");
-				while (langIt.hasNext()) {
-					Language src = langIt.next();
-					System.out.print(src.name + ":" + src.lines + ":");
-				}
-				System.out.println();
 				unique++;
 			}
 			if (testUser.watching.size() == 0) {
 				//System.out.println("User isn't watching anything yet!");
 				empty++;
 			}
-			int startSuggestions = 0;
-			while (testUser.remaining > 0) {
-				guessed += testUser.remaining;
-				//System.out.println("Added top " + testUser.remaining + " repos");
-				//List<Repository> shuffled = sortedRepositories.subList(0, 100);
-				//Collections.shuffle(shuffled);
-				//testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
-//				System.out.println("Suggesting : " + startSuggestions
-				testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
-				startSuggestions += testUser.remaining;
-				removeDuplicates(testUser.suggested);
-				testUser.remaining = SUGGESTIONS - testUser.suggested.size();
+			if (testUser.remaining > 0) {
+
+				if (testUser.watching.size() > 0) {
+					List<Language> userLangs = discoverLanguages(testUser);
+					String mainLanguage = null;
+					if (userLangs.size() < 1) {
+						// back to random
+					} else if (userLangs.size() == 1 && testUser.watching.size() > 1) {
+						// Only interested in language x
+						singleLanguage++;
+						mainLanguage = userLangs.get(0).name;
+					} else if (userLangs.size() < 4 && testUser.watching.size() > 1) {
+						// filter out "helper langs" like javascript
+						Iterator<Language> userLangIt = userLangs.iterator();
+						while (userLangIt.hasNext()) {
+							Language lang = userLangIt.next();
+							if (lang.name.equals("JavaScript")) {
+								filtered++;
+							} else {
+								mainLanguage = lang.name;
+								mainLanguageCount++;
+								break;
+							}
+						}
+					} else {
+						// They probably don't care about language.
+					}
+					if (mainLanguage != null) {
+						System.out.println("Main Language: " + mainLanguage);
+						// Make suggestions based on language
+						
+						int langSuggested = testUser.remaining;
+						List<Repository> repoList = repoLanguages.get(mainLanguage);
+						Collections.sort(repoList, Collections.reverseOrder(new Repository.FollowerComparator()));
+						int startSuggestions = 0;
+						while (testUser.remaining > 0 && startSuggestions < repoList.size()) {
+							testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
+							startSuggestions += testUser.remaining;
+							removeDuplicates(testUser.suggested);
+							testUser.remaining = SUGGESTIONS - testUser.suggested.size();
+						}
+						languageGuessed += langSuggested - testUser.remaining;
+					}
+				}
+
+				int startSuggestions = 0;
+				while (testUser.remaining > 0) {
+					guessed += testUser.remaining;
+					//System.out.println("Added top " + testUser.remaining + " repos");
+					//List<Repository> shuffled = sortedRepositories.subList(0, 100);
+					//Collections.shuffle(shuffled);
+					//testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
+	//				System.out.println("Suggesting : " + startSuggestions
+					testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
+					startSuggestions += testUser.remaining;
+					removeDuplicates(testUser.suggested);
+					testUser.remaining = SUGGESTIONS - testUser.suggested.size();
+				}
 			}
 			Collections.sort(testUser.suggested, Collections.reverseOrder(new Repository.FollowerComparator()));
 			i++;
@@ -368,7 +403,42 @@ public class Recommend {
 		System.out.println(" " + empty + " empty test users - not watching anything - These are test users not in the data as users");
 		System.out.println(" " + unique + " unique test users - they watch stuff noone else is watching");
 		System.out.println(" " + guessed + " guessed suggestions - taken from the most popular projects");
+		System.out.println(" " + languageGuessed + " guessed suggestions based on language - taken from the most popular projects");
+		System.out.println(" " + singleLanguage + " single language users");
+		System.out.println(" " + mainLanguageCount + " have a main language");
+		System.out.println(" " + filtered + " filtered languages");
 		System.out.println(" " + (SUGGESTIONS * testUsers.size()) + " total suggestions");
+	}
+
+	public List<Language> discoverLanguages(TestUser testUser) {
+		Map<String,Language> languages = new HashMap<String,Language>();
+		Iterator<Repository> repoIt = testUser.watching.iterator();
+		while (repoIt.hasNext()) {
+			Repository repo = repoIt.next();
+			if (repo.languages != null) {
+				Iterator<Language> langIt = repo.languages.iterator();
+				while (langIt.hasNext()) {
+					Language src = langIt.next();
+					Language lang = languages.get(src.name);
+					if (lang == null) {
+						lang = new Language(src.name, 0);
+						lang.name = src.name;
+						languages.put(src.name, lang);
+					}
+					lang.lines += src.lines;
+				}
+			}
+		}
+		Iterator<Language> langIt = languages.values().iterator();
+		System.out.print(testUser.id + ":");
+		while (langIt.hasNext()) {
+			Language src = langIt.next();
+			System.out.print(src.name + ":" + src.lines + ":");
+		}
+		System.out.println();
+		List<Language> list = new ArrayList<Language>(languages.values());
+		Collections.sort(list, Collections.reverseOrder(new Language.LinesComparator()));
+		return list;
 	}
 
 	public void removeDuplicates(List list) {
