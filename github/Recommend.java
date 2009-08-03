@@ -351,13 +351,13 @@ public class Recommend {
 						Iterator<Language> userLangIt = userLangs.iterator();
 						while (userLangIt.hasNext()) {
 							Language lang = userLangIt.next();
-							if (lang.name.equals("JavaScript")) {
-								filtered++;
-							} else {
+							//if (lang.name.equals("JavaScript")) {
+							//	filtered++;
+							//} else {
 								mainLanguage = lang.name;
 								mainLanguageCount++;
 								break;
-							}
+							//}
 						}
 					} else {
 						// They probably don't care about language.
