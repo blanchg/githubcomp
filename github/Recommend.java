@@ -304,7 +304,7 @@ public class Recommend {
 			if (i % 280 == 0) System.out.print(".");
 			TestUser testUser = it.next();
 			User bestUser = testUser.bestUser;
-			if (bestUser != null && testUser.bestScore > 1) {
+			if (bestUser != null) {
 				Set<Repository> bestUserRepos = new HashSet<Repository>();
 				bestUserRepos.addAll(bestUser.watching);
 				Iterator<User> userIt = testUser.alternateUser.iterator();
@@ -318,7 +318,7 @@ public class Recommend {
 				int j = 0;
 				while (repoIt.hasNext() && j < SUGGESTIONS) {
 					Repository repo = repoIt.next();
-					if (!testUser.suggested.contains(repo)) {
+					if (!testUser.suggested.contains(repo) && !testUser.watching.contains(repo)) {
 						testUser.suggest(repo);
 						j++;
 					}
