@@ -367,7 +367,7 @@ public class Recommend {
 					} else {
 						// They probably don't care about language.
 					}*/
-					if (mainLanguage != null) {
+					/*if (mainLanguage != null) {
 						//System.out.println("Main Language: " + mainLanguage);
 						// Make suggestions based on language
 						
@@ -392,15 +392,16 @@ public class Recommend {
 							}
 						}
 						languageGuessed += langSuggested - testUser.remaining;
-					}
+					}*/
 				}
 
 				int startSuggestions = 0;
 				int endSuggestions = testUser.remaining;
 				int guessedSuggested = testUser.remaining;
 				while (testUser.remaining > 0) {
+					System.out.println(startSuggestions + " to " + endSuggestions + " of " + sortedRepositories.size() + " left " + testUser.remaining);
 					testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, endSuggestions));
-					removeDuplicates(testUser.suggested);
+					//removeDuplicates(testUser.suggested);
 					removeDuplicates(testUser.watching, testUser.suggested);
 					testUser.remaining = SUGGESTIONS - testUser.suggested.size();
 					if (endSuggestions >= sortedRepositories.size() - 1) {
@@ -409,7 +410,7 @@ public class Recommend {
 					startSuggestions = endSuggestions;
 					endSuggestions += testUser.remaining;
 					if (endSuggestions >= sortedRepositories.size()) {
-						endSuggestions = sortedRepositories.size() - 1;
+						endSuggestions = sortedRepositories.size();
 					}
 				}
 				guessed += guessedSuggested - testUser.remaining;
@@ -512,7 +513,7 @@ public class Recommend {
 		}
 		Iterator<TestUser> userIt = sortedUsers.iterator();
 		i = 0;
-		while(userIt.hasNext() && i < 10) {
+		while(userIt.hasNext() && i < 20) {
 			TestUser user = userIt.next();
 			System.out.println((i+1) + ": " + user);
 			i++;
