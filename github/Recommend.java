@@ -299,6 +299,7 @@ public class Recommend {
 		int mainLanguageCount = 0;
 		int filtered = 0;
 		int languageGuessed = 0;
+		int missed = 0;
 		while (it.hasNext()) {
 			if (i % 280 == 0) System.out.print(".");
 			TestUser testUser = it.next();
@@ -367,37 +368,53 @@ public class Recommend {
 						// They probably don't care about language.
 					}*/
 					if (mainLanguage != null) {
-						System.out.println("Main Language: " + mainLanguage);
+						//System.out.println("Main Language: " + mainLanguage);
 						// Make suggestions based on language
 						
 						int langSuggested = testUser.remaining;
 						List<Repository> repoList = repoLanguages.get(mainLanguage);
 						Collections.sort(repoList, Collections.reverseOrder(new Repository.FollowerComparator()));
 						int startSuggestions = 0;
-						while (testUser.remaining > 0 && startSuggestions < repoList.size()) {
-							testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
-							startSuggestions += testUser.remaining;
+						int endSuggestions = testUser.remaining;
+						while (testUser.remaining > 0) {
+							
+							testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, endSuggestions));
 							removeDuplicates(testUser.suggested);
+							removeDuplicates(testUser.watching, testUser.suggested);
 							testUser.remaining = SUGGESTIONS - testUser.suggested.size();
+							if (endSuggestions >= repoList.size() - 1) {
+								break;
+							}
+							startSuggestions = endSuggestions;
+							endSuggestions += testUser.remaining;
+							if (endSuggestions >= repoList.size()) {
+								endSuggestions = repoList.size() - 1;
+							}
 						}
 						languageGuessed += langSuggested - testUser.remaining;
 					}
 				}
 
 				int startSuggestions = 0;
+				int endSuggestions = testUser.remaining;
+				int guessedSuggested = testUser.remaining;
 				while (testUser.remaining > 0) {
-					guessed += testUser.remaining;
-					//System.out.println("Added top " + testUser.remaining + " repos");
-					//List<Repository> shuffled = sortedRepositories.subList(0, 100);
-					//Collections.shuffle(shuffled);
-					//testUser.suggested.addAll(shuffled.subList(0, testUser.remaining));
-	//				System.out.println("Suggesting : " + startSuggestions
-					testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, startSuggestions + testUser.remaining));
-					startSuggestions += testUser.remaining;
+					testUser.suggested.addAll(sortedRepositories.subList(startSuggestions, endSuggestions));
 					removeDuplicates(testUser.suggested);
+					removeDuplicates(testUser.watching, testUser.suggested);
 					testUser.remaining = SUGGESTIONS - testUser.suggested.size();
+					if (endSuggestions >= sortedRepositories.size() - 1) {
+						break;
+					}
+					startSuggestions = endSuggestions;
+					endSuggestions += testUser.remaining;
+					if (endSuggestions >= sortedRepositories.size()) {
+						endSuggestions = sortedRepositories.size() - 1;
+					}
 				}
+				guessed += guessedSuggested - testUser.remaining;
 			}
+			missed += testUser.remaining;
 			Collections.sort(testUser.suggested, Collections.reverseOrder(new Repository.FollowerComparator()));
 			i++;
 		}
@@ -411,6 +428,7 @@ public class Recommend {
 		System.out.println(" " + singleLanguage + " single language users");
 		System.out.println(" " + mainLanguageCount + " have a main language");
 		System.out.println(" " + filtered + " filtered languages");
+		System.out.println(" " + missed + " missed guesses SHOULD BE 0");
 		System.out.println(" " + (SUGGESTIONS * testUsers.size()) + " total suggestions");
 	}
 
@@ -434,12 +452,12 @@ public class Recommend {
 			}
 		}
 		Iterator<Language> langIt = languages.values().iterator();
-		System.out.print(testUser.id + ":");
+		//System.out.print(testUser.id + ":");
 		while (langIt.hasNext()) {
 			Language src = langIt.next();
-			System.out.print(src.name + ":" + src.lines + ":");
+			//System.out.print(src.name + ":" + src.lines + ":");
 		}
-		System.out.println();
+		//System.out.println();
 		List<Language> list = new ArrayList<Language>(languages.values());
 		Collections.sort(list, Collections.reverseOrder(new Language.LinesComparator()));
 		return list;
@@ -451,6 +469,16 @@ public class Recommend {
 			int j = list.lastIndexOf(o);
 			if (j != -1 && j != i) {
 				list.remove(o);
+			}
+		}
+	}
+
+	public void removeDuplicates(List watching, List suggested) {
+		for (int i = 0; i < suggested.size(); i++) {
+			Object o = suggested.get(i);
+			int j = watching.indexOf(o);
+			if (j == -1) {
+				suggested.remove(o);
 			}
 		}
 	}
