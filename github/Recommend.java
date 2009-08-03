@@ -478,7 +478,8 @@ public class Recommend {
 		for (int i = 0; i < suggested.size(); i++) {
 			Object o = suggested.get(i);
 			int j = watching.indexOf(o);
-			if (j == -1) {
+			if (j != -1) {
+				System.out.println("Removing " + o);
 				suggested.remove(o);
 			}
 		}
