@@ -303,7 +303,7 @@ public class Recommend {
 			if (i % 280 == 0) System.out.print(".");
 			TestUser testUser = it.next();
 			User bestUser = testUser.bestUser;
-			if (bestUser != null) {
+			if (bestUser != null && testUser.bestScore > 1) {
 				Set<Repository> bestUserRepos = new HashSet<Repository>();
 				bestUserRepos.addAll(bestUser.watching);
 				Iterator<User> userIt = testUser.alternateUser.iterator();
